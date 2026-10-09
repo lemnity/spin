@@ -1,3 +1,23 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:868c76524756bd3beb57a230a187ccbae75eac1ac3ac57a0dbe6dd4b365d4332
-size 1386
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="Женский аватар по умолчанию">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f472b6"/>
+      <stop offset="0.55" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+    <linearGradient id="shirt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#be123c"/>
+      <stop offset="1" stop-color="#9f1239"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
+  <circle cx="128" cy="122" r="78" fill="#ffffff" opacity="0.92"/>
+  <circle cx="128" cy="122" r="74" fill="#fdf2f8"/>
+  <path d="M56 128c6-44 34-76 72-76s66 32 72 76c-10-18-30-28-72-28s-62 10-72 28z" fill="#4c1d95"/>
+  <path d="M64 110c14 6 30 10 64 10s50-4 64-10c-8-20-28-40-64-40s-56 20-64 40z" fill="#6d28d9" opacity="0.75"/>
+  <circle cx="101" cy="128" r="7" fill="#0f172a"/>
+  <circle cx="155" cy="128" r="7" fill="#0f172a"/>
+  <path d="M104 154c12 12 36 12 48 0" fill="none" stroke="#0f172a" stroke-width="8" stroke-linecap="round"/>
+  <path d="M64 238c8-46 42-72 64-72s56 26 64 72" fill="url(#shirt)"/>
+  <path d="M92 173c8 8 20 12 36 12s28-4 36-12" fill="none" stroke="#fff1f2" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+</svg>

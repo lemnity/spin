@@ -1,3 +1,4 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:2a442e627ab6b7a6bceb82e78dd4446f80328e6867603f1ab671f45e9768d19d
-size 251
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#e8457c"/>
+  <path fill="white" d="M16 8c-3 0-5.5 2.2-5.5 5.2 0 4.5 5.5 10.8 5.5 10.8s5.5-6.3 5.5-10.8C21.5 10.2 19 8 16 8z"/>
+</svg>
