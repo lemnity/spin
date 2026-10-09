@@ -17,6 +17,7 @@ function allowedOrigin(request: NextRequest): string | null {
   const builtins = [
     "https://spindate.lemnity.ru",
     "https://thesimakov.github.io",
+    "https://lemnity.github.io",
     "https://vk.com",
     "https://vk.ru",
     "https://m.vk.com",

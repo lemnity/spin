@@ -1,0 +1,60 @@
+# Статический фронт на GitHub Pages (https://lemnity.github.io/spin/).
+# API, БД и realtime остаются на VPS: запросы /api/* идут на NEXT_PUBLIC_API_BASE_URL.
+# Для деплоя на свой сервер эта сборка не используется — там обычный `next build` без export.
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Static export не поддерживает Route Handlers, middleware и instrumentation — их обслуживает VPS.
+      - name: Remove server-only entrypoints
+        run: rm -rf app/api middleware.ts instrumentation.ts
+
+      - name: Build static export
+        run: npm run build
+        env:
+          BUILD_FOR_PAGES: "true"
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+          NEXT_PUBLIC_API_BASE_URL: https://spindate.lemnity.ru
+          NEXT_PUBLIC_APP_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+          NEXT_PUBLIC_BUILD_ID: ${{ github.sha }}
+
+      - run: touch out/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
