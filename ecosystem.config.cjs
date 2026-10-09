@@ -1,0 +1,91 @@
+/** PM2: запуск Next.js на сервере. Использование: pm2 start ecosystem.config.cjs
+ *  Nginx: proxy_pass http://127.0.0.1:<PORT> — тот же PORT, что ниже.
+ *  На одном VPS с rps-vk-game: тот проект — порт 3001, spindate — 3002 (не пересекаются).
+ *  Если nginx смотрит не на тот порт — стили/чанки с /_next/static часто дают 500/502.
+ *
+ *  Zero-downtime: деплой создаёт releases/ и переключает symlink current/.
+ *  PM2 reload (graceful restart) подхватывает новый код из cwd.
+ *  Данные (Redis, SQLite) живут вне releases/ и не теряются.
+ *
+ *  Общие секреты: один или оба файла (поздний в списке перекрывает ранний):
+ *  - ../shared/.env.local — типично /var/www/shared при приложении в /var/www/spindate
+ *  - ../../shared/.env.local — при каталоге релиза releases/…/current (два уровня вверх до корня деплоя)
+ *  PM2 подмешивает их в env процесса — видно в `pm2 env 0`, Next тоже их видит.
+ *
+ *  Фоновый воркер BullMQ (опционально, нужен REDIS_URL): `npm run worker` или
+ *  `pm2 start node_modules/tsx/dist/cli.mjs --name spindate-worker --cwd . -- server/background-worker.ts` — см. docs/SCALING.md */
+const fs = require("node:fs")
+const path = require("node:path")
+
+function parseDotEnvFile(filePath) {
+  const out = {}
+  try {
+    if (!fs.existsSync(filePath)) return out
+    const text = fs.readFileSync(filePath, "utf8")
+    for (let line of text.split("\n")) {
+      line = line.trim()
+      if (!line || line.startsWith("#")) continue
+      const eq = line.indexOf("=")
+      if (eq <= 0) continue
+      const key = line.slice(0, eq).trim()
+      if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) continue
+      let val = line.slice(eq + 1).trim()
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'"))
+      ) {
+        val = val.slice(1, -1)
+      }
+      out[key] = val
+    }
+  } catch {
+    // ignore
+  }
+  return out
+}
+
+const sharedEnvPaths = [
+  path.join(__dirname, "..", "..", "shared", ".env.local"),
+  path.join(__dirname, "..", "shared", ".env.local"),
+]
+let sharedEnv = {}
+for (const p of sharedEnvPaths) {
+  sharedEnv = { ...sharedEnv, ...parseDotEnvFile(p) }
+}
+/** Корень приложения: .env затем .env.local (локальные переопределяют). Часто секреты кладут только в .env — без merge PM2 их не видит. */
+const projectEnvPath = path.join(__dirname, ".env")
+const projectEnvDot = parseDotEnvFile(projectEnvPath)
+const projectEnvPathLocal = path.join(__dirname, ".env.local")
+const projectEnvLocal = parseDotEnvFile(projectEnvPathLocal)
+const projectMerged = { ...projectEnvDot, ...projectEnvLocal }
+
+const baseEnv = {
+  ...sharedEnv,
+  ...projectEnvDot,
+  ...projectEnvLocal,
+  NODE_ENV: "production",
+  PORT: process.env.PORT || projectMerged.PORT || sharedEnv.PORT || "3002",
+}
+const useCustomServer = String(process.env.USE_CUSTOM_SERVER || projectMerged.USE_CUSTOM_SERVER || sharedEnv.USE_CUSTOM_SERVER || "").trim() === "1"
+const script = useCustomServer ? "node_modules/tsx/dist/cli.mjs" : "node"
+const args = useCustomServer
+  ? "server/custom-server.ts"
+  : "node_modules/next/dist/bin/next start"
+
+module.exports = {
+  apps: [
+    {
+      name: "spindate",
+      cwd: __dirname,
+      script,
+      args,
+      instances: 1,
+      exec_mode: "fork",
+      kill_timeout: 5000,
+      listen_timeout: 10000,
+      wait_ready: false,
+      env: { ...baseEnv },
+      env_production: { ...baseEnv },
+    },
+  ],
+}
